@@ -15,12 +15,12 @@ export function useOrders() {
 
   const { mutate: createOrder } = useMutation({
     mutationFn: ordersApi.create,
-    onSuccess: () => qc.invalidateQueries(["orders"]),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["orders"] }),
   });
 
   const { mutate: updateStatus } = useMutation({
     mutationFn: ({ id, expo_status }) => ordersApi.updateStatus(id, expo_status),
-    onSuccess: () => qc.invalidateQueries(["orders"]),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["orders"] }),
   });
 
   return {
