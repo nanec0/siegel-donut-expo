@@ -94,6 +94,53 @@ const TicketCard = ({ ticket, colAccent, colGlow, onStart, onReady, onBump }) =>
   );
 };
 
+const WASTE_REASONS = ["Overproduced","Dropped / Damaged","Quality Fail","Wrong Order","Expired","Other"];
+const DONUT_TYPES   = ["Classic Glazed","Chocolate Frosted","Raspberry Filled","Maple Bacon","Matcha Dream","Strawberry Burst","Other"];
+
+const WasteModal = ({ onClose, onSubmit }) => {
+  const [item, setItem]     = useState(DONUT_TYPES[0]);
+  const [qty, setQty]       = useState(1);
+  const [reason, setReason] = useState(WASTE_REASONS[0]);
+  const ref = useRef(null);
+  useClickOutside(ref, onClose);
+  const sel = { background:"#0d0d1a", color:"#fff", border:"1px solid #333", borderRadius:8, padding:"8px 10px", fontSize:13, width:"100%", cursor:"pointer" };
+  return (
+    <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
+      style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <motion.div ref={ref} initial={{scale:.9,y:20}} animate={{scale:1,y:0}} exit={{scale:.9,y:20}} transition={{type:"spring",stiffness:340,damping:28}}
+        style={{background:"#10101e",border:"1.5px solid #ff2d78",borderRadius:20,padding:28,width:360,boxShadow:"0 0 40px rgba(255,45,120,.4)",display:"flex",flexDirection:"column",gap:18}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <div style={{fontWeight:900,fontSize:17,color:"#fff"}}>🗑 Report Waste</div>
+          <button onClick={onClose} style={{background:"none",border:"none",color:"#555",fontSize:20,cursor:"pointer",lineHeight:1}}>×</button>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+          <label style={{fontSize:11,color:"#888",letterSpacing:1}}>ITEM</label>
+          <select value={item} onChange={e=>setItem(e.target.value)} style={sel}>
+            {DONUT_TYPES.map(d=><option key={d}>{d}</option>)}
+          </select>
+          <label style={{fontSize:11,color:"#888",letterSpacing:1}}>QUANTITY WASTED</label>
+          <input type="number" min={1} value={qty} onChange={e=>setQty(Math.max(1,+e.target.value))}
+            style={{...sel, width:"auto"}}/>
+          <label style={{fontSize:11,color:"#888",letterSpacing:1}}>REASON</label>
+          <select value={reason} onChange={e=>setReason(e.target.value)} style={sel}>
+            {WASTE_REASONS.map(r=><option key={r}>{r}</option>)}
+          </select>
+        </div>
+        <div style={{display:"flex",gap:10,marginTop:4}}>
+          <button onClick={onClose}
+            style={{flex:1,padding:"10px 0",borderRadius:12,background:"none",border:"1px solid #333",color:"#aaa",fontWeight:700,fontSize:13,cursor:"pointer"}}>
+            Cancel
+          </button>
+          <motion.button whileTap={{scale:.95}} onClick={() => onSubmit({item,qty,reason})}
+            style={{flex:2,padding:"10px 0",borderRadius:12,background:"#ff2d78",border:"none",color:"#fff",fontWeight:800,fontSize:13,cursor:"pointer",boxShadow:"0 0 16px rgba(255,45,120,.5)"}}>
+            Submit Waste Report
+          </motion.button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
 const Toast = ({ msg, color="#30d158" }) => (
   <motion.div initial={{opacity:0,y:30,x:"-50%"}} animate={{opacity:1,y:0,x:"-50%"}} exit={{opacity:0,y:30,x:"-50%"}}
     style={{position:"fixed",bottom:24,left:"50%",background:"#1a1a2e",border:`1px solid ${color}`,borderRadius:14,padding:"10px 20px",color:"#fff",fontWeight:700,fontSize:13,boxShadow:`0 0 20px ${color}66`,zIndex:200,whiteSpace:"nowrap"}}>
@@ -134,6 +181,11 @@ export default function DonutKDS() {
     let bumpedId = id;
     setTickets(ts => { const t = ts.find(x => x.id===id); if(t) bumpedId=t.id; return ts.filter(x => x.id!==id); });
     setTimeout(() => showToast(`📡 ${bumpedId} bumped to Revel ✓`, "#0a84ff"), 0);
+  }, [showToast]);
+
+  const handleWaste = useCallback(({item,qty,reason}) => {
+    setShowWaste(false);
+    showToast(`🗑 Waste logged: ${qty}× ${item} (${reason})`, "#ff2d78");
   }, [showToast]);
 
   const colTickets = useMemo(() => {
@@ -195,6 +247,7 @@ export default function DonutKDS() {
         })}
       </div>
       <AnimatePresence>{toast && <Toast key={toast.msg} msg={toast.msg} color={toast.color}/>}</AnimatePresence>
+      <AnimatePresence>{showWaste && <WasteModal onClose={() => setShowWaste(false)} onSubmit={handleWaste}/>}</AnimatePresence>
     </div>
   );
 }
